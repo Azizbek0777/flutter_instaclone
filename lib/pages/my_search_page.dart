@@ -9,7 +9,6 @@ class MySearchPage extends StatefulWidget {
 
 class _MySearchPageState extends State<MySearchPage> {
   bool isLoading = false;
-
   var searchController = TextEditingController();
   List<User> items = new List();
 
