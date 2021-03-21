@@ -28,6 +28,30 @@ class _MySearchPageState extends State<MySearchPage> {
     });
   }
 
+  void _apiFollowUser(User someone) async{
+    setState(() {
+      isLoading = true;
+    });
+    await DataService.followUser(someone);
+    setState(() {
+      someone.followed = true;
+      isLoading = false;
+    });
+    DataService.storePostsToMyFeed(someone);
+  }
+
+  void _apiUnfollowUser(User someone) async{
+    setState(() {
+      isLoading = true;
+    });
+    await DataService.unfollowUser(someone);
+    setState(() {
+      someone.followed = false;
+      isLoading = false;
+    });
+    DataService.removePostsFromMyFeed(someone);
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -160,7 +184,11 @@ class _MySearchPageState extends State<MySearchPage> {
 
                 GestureDetector(
                   onTap: (){
-
+                    if(user.followed){
+                      _apiUnfollowUser(user);
+                    }else{
+                      _apiFollowUser(user);
+                    }
                   },
                   child: Container(
                     width: 100,

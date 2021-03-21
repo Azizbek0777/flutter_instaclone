@@ -119,4 +119,92 @@ class DataService {
     return posts;
   }
 
+
+  static Future<Post> likePost(Post post, bool liked) async {
+    String uid = await Prefs.loadUserId();
+    post.liked = liked;
+
+    await _firestore.collection(folder_users).document(uid).collection(folder_feeds).document(post.id).setData(post.toJson());
+
+    if(uid == post.uid){
+      await _firestore.collection(folder_users).document(uid).collection(folder_posts).document(post.id).setData(post.toJson());
+    }
+  }
+
+  static Future<List<Post>> loadLikes() async {
+    String uid = await Prefs.loadUserId();
+    List<Post> posts = new List();
+
+    var querySnapshot = await _firestore.collection(folder_users).document(uid).collection(folder_feeds).where("liked", isEqualTo: true).getDocuments();
+
+    querySnapshot.documents.forEach((result) {
+      Post post = Post.fromJson(result.data);
+      posts.add(post);
+    });
+    return posts;
+
+  }
+
+  // Follower and Following Related
+
+  static Future<User> followUser(User someone) async {
+    User me = await loadUser();
+
+    // I followed to someone
+    await _firestore.collection(folder_users).document(me.uid).collection(folder_following).document(someone.uid).setData(someone.toJson());
+
+    // I am in someone`s followers
+    await _firestore.collection(folder_users).document(someone.uid).collection(folder_followers).document(me.uid).setData(me.toJson());
+
+    return someone;
+  }
+
+  static Future<User> unfollowUser(User someone) async {
+    User me = await loadUser();
+
+    // I un followed to someone
+    await _firestore.collection(folder_users).document(me.uid).collection(folder_following).document(someone.uid).delete();
+
+    // I am not in someone`s followers
+    await _firestore.collection(folder_users).document(someone.uid).collection(folder_followers).document(me.uid).delete();
+
+    return someone;
+  }
+
+  static Future storePostsToMyFeed(User someone) async{
+    // Store someone`s posts to my feed
+
+    List<Post> posts = new List();
+    var querySnapshot = await _firestore.collection(folder_users).document(someone.uid).collection(folder_posts).getDocuments();
+    querySnapshot.documents.forEach((result) {
+      var post = Post.fromJson(result.data);
+      post.liked = false;
+      posts.add(post);
+    });
+
+    for(Post post in posts){
+      storeFeed(post);
+    }
+  }
+
+  static Future removePostsFromMyFeed(User someone) async{
+    // Remove someone`s posts from my feed
+
+    List<Post> posts = new List();
+    var querySnapshot = await _firestore.collection(folder_users).document(someone.uid).collection(folder_posts).getDocuments();
+    querySnapshot.documents.forEach((result) {
+      posts.add(Post.fromJson(result.data));
+    });
+
+    for(Post post in posts){
+      removeFeed(post);
+    }
+  }
+
+  static Future removeFeed(Post post) async{
+    String uid = await Prefs.loadUserId();
+
+    return await _firestore.collection(folder_users).document(uid).collection(folder_feeds).document(post.id).delete();
+  }
+
 }

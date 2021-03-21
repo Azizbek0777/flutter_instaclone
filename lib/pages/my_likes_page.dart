@@ -13,11 +13,37 @@ class _MyLikesPageState extends State<MyLikesPage> {
   bool isLoading = false;
   List<Post> items = new List();
 
+  void _apiLoadLikes() {
+    setState(() {
+      isLoading = true;
+    });
+    DataService.loadLikes().then((value) => {
+      _resLoadLikes(value),
+    });
+  }
+
+  void _resLoadLikes(List<Post> posts) {
+    setState(() {
+      items = posts;
+      isLoading = false;
+    });
+  }
+
+  void _apiPostUnLike(Post post) {
+    setState(() {
+      isLoading = true;
+      post.liked = false;
+    });
+    DataService.likePost(post, false).then((value) => {
+      _apiLoadLikes(),
+    });
+  }
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    _apiLoadLikes();
   }
 
   @override
@@ -35,11 +61,15 @@ class _MyLikesPageState extends State<MyLikesPage> {
       ),
       body: Stack(
         children: [
+
+          items.length > 0?
           ListView.builder(
             itemCount: items.length,
             itemBuilder: (ctx, index){
               return _itemOfPost(items[index]);
             },
+          ): Center(
+            child: Text("No liked posts"),
           ),
 
           isLoading
@@ -126,7 +156,7 @@ class _MyLikesPageState extends State<MyLikesPage> {
                   IconButton(
                     onPressed: () {
                       if (post.liked) {
-
+                        _apiPostUnLike(post);
                       }
                     },
                     icon: post.liked
