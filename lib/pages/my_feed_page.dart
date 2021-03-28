@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_instaclone/model/post_model.dart';
 import 'package:flutter_instaclone/services/data_service.dart';
+import 'package:flutter_instaclone/services/utils_service.dart';
 
 class MyFeedPage extends StatefulWidget {
 
@@ -53,6 +54,18 @@ class _MyFeedPageState extends State<MyFeedPage> {
       isLoading = false;
       post.liked = false;
     });
+  }
+
+  _actionRemovePost(Post post) async{
+    var result = await Utils.dialogCommon(context, "Insta Clone", "Do you want to remove this post?", false);
+    if(result != null && result){
+      setState(() {
+        isLoading = true;
+      });
+      DataService.removePost(post).then((value) => {
+        _apiLoadFeeds(),
+      });
+    }
   }
 
   @override
@@ -149,10 +162,13 @@ class _MyFeedPageState extends State<MyFeedPage> {
                     ),
                   ],
                 ),
+                post.mine ?
                 IconButton(
                   icon: Icon(SimpleLineIcons.options),
-                  onPressed: () {},
-                ),
+                  onPressed: () {
+                    _actionRemovePost(post);
+                  },
+                ): SizedBox.shrink(),
               ],
             ),
           ),

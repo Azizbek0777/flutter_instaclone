@@ -7,6 +7,7 @@ import 'package:flutter_instaclone/model/user_model.dart';
 import 'package:flutter_instaclone/services/auth_service.dart';
 import 'package:flutter_instaclone/services/data_service.dart';
 import 'package:flutter_instaclone/services/file_service.dart';
+import 'package:flutter_instaclone/services/utils_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 class MyProfilePage extends StatefulWidget {
@@ -123,6 +124,26 @@ class _MyProfilePageState extends State<MyProfilePage> {
     });
   }
 
+  _actionLogout() async{
+
+    var result = await Utils.dialogCommon(context, "Insta Clone", "Do you want to logout?", false);
+    if(result != null && result){
+      AuthService.signOutUser(context);
+    }
+  }
+
+  _actionRemovePost(Post post) async{
+    var result = await Utils.dialogCommon(context, "Insta Clone", "Do you want to remove this post?", false);
+    if(result != null && result){
+      setState(() {
+        isLoading = true;
+      });
+      DataService.removePost(post).then((value) => {
+        _apiLoadPosts(),
+      });
+    }
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -147,7 +168,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
         actions: [
           IconButton(
             onPressed: () {
-              AuthService.signOutUser(context);
+              _actionLogout();
             },
             icon: Icon(Icons.exit_to_app),
             color: Color.fromRGBO(193, 53, 132, 1),
@@ -385,29 +406,34 @@ class _MyProfilePageState extends State<MyProfilePage> {
   }
 
   Widget _itemOfPost(Post post) {
-    return Container(
-      margin: EdgeInsets.all(5),
-      child: Column(
-        children: [
-          Expanded(
-            child: CachedNetworkImage(
-              width: double.infinity,
-              imageUrl: post.img_post,
-              placeholder: (context, url) => Center(child: CircularProgressIndicator(),),
-              errorWidget: (context, url, error) => Icon(Icons.error),
-              fit: BoxFit.cover,
+    return GestureDetector(
+      onLongPress: (){
+        _actionRemovePost(post);
+      },
+      child: Container(
+        margin: EdgeInsets.all(5),
+        child: Column(
+          children: [
+            Expanded(
+              child: CachedNetworkImage(
+                width: double.infinity,
+                imageUrl: post.img_post,
+                placeholder: (context, url) => Center(child: CircularProgressIndicator(),),
+                errorWidget: (context, url, error) => Icon(Icons.error),
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-          SizedBox(
-            height: 3,
-          ),
-          Text(
-            post.caption,
-            style: TextStyle(color: Colors.black87.withOpacity(0.7)),
-            maxLines: 2,
-          ),
-        ],
-      ),
+            SizedBox(
+              height: 3,
+            ),
+            Text(
+              post.caption,
+              style: TextStyle(color: Colors.black87.withOpacity(0.7)),
+              maxLines: 2,
+            ),
+          ],
+        ),
+      )
     );
   }
 }

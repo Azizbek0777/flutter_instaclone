@@ -1,4 +1,6 @@
 
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_instaclone/model/post_model.dart';
 import 'package:flutter_instaclone/model/user_model.dart';
@@ -18,6 +20,13 @@ class DataService {
 
   static Future storeUser(User user) async {
     user.uid = await Prefs.loadUserId();
+    Map<String, String> params = await Utils.deviceParams();
+    print(params.toString());
+
+    user.device_id = params["device_id"];
+    user.device_type = params["device_type"];
+    user.device_token = params["device_token"];
+
     return _firestore.collection(folder_users).document(user.uid).setData(user.toJson());
   }
 
@@ -102,6 +111,7 @@ class DataService {
 
     querySnapshot.documents.forEach((result) {
       Post post = Post.fromJson(result.data);
+      if(post.uid == uid) post.mine = true;
       posts.add(post);
     });
     return posts;
@@ -139,6 +149,7 @@ class DataService {
 
     querySnapshot.documents.forEach((result) {
       Post post = Post.fromJson(result.data);
+      if(post.uid == uid) post.mine = true;
       posts.add(post);
     });
     return posts;
@@ -205,6 +216,13 @@ class DataService {
     String uid = await Prefs.loadUserId();
 
     return await _firestore.collection(folder_users).document(uid).collection(folder_feeds).document(post.id).delete();
+  }
+
+  static Future removePost(Post post) async{
+    String uid = await Prefs.loadUserId();
+    await removeFeed(post);
+    return await _firestore.collection(folder_users).document(uid)
+        .collection(folder_posts).document(post.id).delete();
   }
 
 }
